@@ -9,6 +9,7 @@
 #pragma(pop)
 
 #pragma warning(disable :5045)
+#pragma warning(disable :4711)
 
 
 typedef struct
@@ -50,96 +51,149 @@ uint8_t *simulate_life(uint32_t grid_dim, start_coord_t *initial_points, uint32_
   return grid;
 }
 */
-int count_neighbours(uint8_t map[2048][2048], uint32_t grid_dim, int x, int y)
+// int count_neighbours(uint8_t map[2048][2048], uint32_t grid_dim, int x, int y)
+// {
+//   int counter = 0;
+//   for (int dx = -1; dx <= 1; dx++)
+//   {
+//     for (int dy = -1; dy <= 1; dy++)
+//     {
+//       if (dx == 0 && dy == 0)
+//         continue;
+//       int nx = x + dx;
+//       int ny = y + dy;
+//       if ((nx >= 0 && nx < grid_dim) || (ny >= 0 && ny < grid_dim))
+//       {
+//         if(map[nx][ny] == 0)
+//           counter++;
+//       }
+//     }
+//   }
+//   return counter;
+// }
+
+// uint8_t *get_next_generation(uint8_t map[2048][2048], uint32_t grid_dim, uint8_t *buffer)
+// {
+//   int counter = 0;
+//   int cordi = 0; // to convert the 2D coordinates into 1D buffer index
+
+//   for (int i = 0; i < grid_dim; i++)
+//   {
+//     for (int j = 0; j < grid_dim; j++)
+//     {
+//       cordi = (i + j) + (i * (grid_dim - 1)) + grid_dim;
+//       counter = count_neighbours(map, grid_dim, i, j );
+//       if (map[i][j] == 0) // alive cell
+//       {
+//         if (counter == 3)
+//           buffer[cordi] = 1;
+//         else
+//           buffer[cordi] = 0;
+//       }
+//       else // dead
+//       {
+//         if (counter == 2 || counter == 3)
+//           buffer[cordi] = 1;
+//         else
+//           buffer[cordi] = 0;
+//       }
+
+//     }
+//   }
+//   return buffer;
+// }
+
+
+int count_neighbours(uint8_t map[4096], uint32_t grid_dim, int x)
 {
   int counter = 0;
-  for (int dx = -1; dx <= 1; dx++)
-  {
-    for (int dy = -1; dy <= 1; dy++)
-    {
-      if (dx == 0 && dy == 0)
-        continue;
-      int nx = x + dx;
-      int ny = y + dy;
-      if ((nx >= 0 && nx < grid_dim) || (ny >= 0 && ny < grid_dim))
-      {
-        if(map[nx][ny] == 0)
-          counter++;
-      }
-    }
-  }
-  return counter;
+  // for (int dx = -1; dx <= 1; dx++)
+  // {
+  //     if (dx == 0)
+  //       continue;
+  //     int nx = x + dx;
+  //       if(map[nx] == 0)
+  //         counter++;
+  // }
+  if (map[x - 17] == 1)
+    counter++;
+  if (map[x - 16] == 1)
+    counter++;
+  if (map[x - 15] == 1)
+    counter++;
+  if (map[x - 1] == 1)
+    counter++;
+  if (map[x + 17] == 1)
+    counter++;
+  if (map[x + 16] == 1)
+    counter++;
+  if (map[x + 15] == 1)
+    counter++;
+  if (map[x + 1] == 1)
+    counter++;
+   return counter;
 }
 
-uint8_t *get_next_generation(uint8_t map[2048][2048], uint32_t grid_dim, uint8_t *buffer)
+uint8_t *get_next_generation(uint8_t map[4096], uint32_t grid_dim, uint8_t *buffer)
 {
   int counter = 0;
-  int cordi = 0; // to convert the 2D coordinates into 1D buffer index
 
-  for (int i = 0; i < grid_dim; i++)
+  for (int i = 0; i < grid_dim * grid_dim; i++)
   {
-    for (int j = 0; j < grid_dim; j++)
-    {
-      cordi = (i + j) + (i * (grid_dim - 1)) + grid_dim;
-      counter = count_neighbours(map, grid_dim, i, j );
-      if (map[i][j] == 0) // alive cell
+      counter = count_neighbours(map, grid_dim, i);
+      if (map[i] == 0) // alive cell
       {
         if (counter == 3)
-          buffer[cordi] = 1;
+          buffer[i] = 1;
         else
-          buffer[cordi] = 0;
+          buffer[i] = 0;
       }
       else // dead
       {
         if (counter == 2 || counter == 3)
-          buffer[cordi] = 1;
+          buffer[i] = 1;
         else
-          buffer[cordi] = 0;
+          buffer[i] = 0;
       }
-
-    }
   }
   return buffer;
-  
 }
 
 uint8_t *simulate_life(uint32_t grid_dim, start_coord_t *initial_points, uint32_t initial_point_count)
 {
 
-  static uint8_t map[2048][2048];
+  static uint8_t map[4096];
   int buffer_size = grid_dim * grid_dim;
-  int x =0;
-  int y =0;
+  int x = 0;
+  int y = 0;
 
-  // setting the old data which will be proccessed later:
+  // ####### setting the old data which will be proccessed later: #######
 
   if (loops_counter == 0) // the 1st loop
   {
     // allocation for the 1st time only
     buffer  = calloc(buffer_size , sizeof(uint8_t));
     // reset the whole map:
-    for (int i = 0 ; i < grid_dim ; i++)
+    for (int i = 0 ; i < 256 ; i++)
     {
-      for (int j = 0 ; j < grid_dim ; j++)
-      {
-        map[i][j] = 0;
-      }
+      map[i] = 0;
     }
     // taking the initial points into the map
     for (int k = 0 ; k < initial_point_count ; k++)
     {
-      map[initial_points[k].x][initial_points[k].y] = 1;
+      map[initial_points[k].y * grid_dim + initial_points[k].x] = 1;
     }
   }
   else
   {
-    // iterating through the buffer
+    // iterating through the buffer and backing up the data into map
     for (int i = 0; i < buffer_size; i++)
     {
-      // converting the buffer index to the 2D map coorinates:
-      x = i / grid_dim;
-      y = i % grid_dim;
-      map[x][y] = buffer[i];
+      map[i] = buffer[i];
+      // if ( i % 2 == 0)
+      //    map[i] = 1;
+      // else
+      //    map[i] = 0;
     }
   }
 
@@ -147,6 +201,8 @@ uint8_t *simulate_life(uint32_t grid_dim, start_coord_t *initial_points, uint32_
 
   loops_counter++;
   return buffer;
+  // return map;
+
 }
 
   // char *error ="my error";
